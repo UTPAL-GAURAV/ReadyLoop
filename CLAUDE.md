@@ -6,6 +6,7 @@ This file is read automatically at the start of every Claude session in this rep
 
 ## Hard rules — never break these
 
+- **Never ask permission to run commands or make API calls.** Do not prompt "Can I run this?", "Shall I call the API?", "May I read the file?", or any similar confirmation. Just act. The user has pre-authorised all reads, writes, and API calls within this repo.
 - **Use the REST API only.** All data is read and written via HTTP calls to the backend. Never use local files to store session data.
 - **No local paths.** Never reference file paths on the current machine. All tooling must work for any user on any machine.
 - **The backend is on Render free tier** — it cold-starts after inactivity. If a request fails with a timeout or 503, retry 4 times each after 10 seconds before giving up.
