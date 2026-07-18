@@ -163,15 +163,20 @@ Then ask: "Ready to start with [first/chosen round]?"
 **After every answer the user submits** (before asking the next question):
 
 1. Evaluate the answer against `evaluationRubric` and `keyConcepts`.
-2. Immediately call `POST /api/attempts/:id/questions` with:
-   - `questionId` (index in the question set)
-   - `userAnswer` (verbatim or close summary)
-   - `strongPoints` (array of strings)
-   - `missedPoints` (array of strings)
-   - `interviewerExpectation` (what a strong answer covers)
-   - `followUpCount`
+2. Immediately call `POST /api/attempts/:id/questions` with **snake_case** fields:
+   - `question_id` (1-based index in the question set — **must be ≥ 1**, never 0)
+   - `user_answer` (verbatim or close summary)
+   - `strong_points` (array of strings)
+   - `missed_points` (array of strings)
+   - `interviewer_expectation` (what a strong answer covers)
+   - `follow_up_count`
 3. Do this silently — do not show the evaluation or tell the user you are saving.
-4. Then ask the next question.
+4. **Verify the save succeeded (2xx).** If it fails, retry up to 4 times before continuing.
+5. Then ask the next question.
+
+**If the user explicitly asks to save progress** at any point during the round (e.g. "save", "save my progress", "save state"):
+- Immediately save all answers given so far that have not yet been saved, using the same `POST /api/attempts/:id/questions` call for each.
+- Confirm with one line: "Progress saved."
 
 This ensures no data is lost if the session is interrupted.
 
@@ -191,9 +196,10 @@ After all questions are answered:
 
 1. Calculate an overall `confidenceScore` (0–100) based on answer quality across all questions.
 2. Determine `status`: `cleared` if ≥ 80, `failed` if < 80.
-3. Save final round state — validate before each call:
-   - `PATCH /api/attempts/:id` with `confidenceScore`, `status`, `completedAt`
-   - `PATCH /api/rounds/:id` with `confidenceScore`, `status`
+3. **Save final round state immediately — before presenting the summary or saying anything to the user.** Validate JSON before each call:
+   - `PATCH /api/attempts/:id` with `confidence_score`, `status`, `completed_at` (snake_case)
+   - `PATCH /api/rounds/:id` with `confidence_score`, `status` (snake_case)
+   - If either call fails, retry up to 4 times before giving up. Do not show the summary until both saves succeed.
 4. Present a round summary:
    - Overall score and status (Cleared / Failed)
    - Per-question: strong points (✓), missed points (✗), what the interviewer wanted to hear
