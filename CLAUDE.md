@@ -147,10 +147,13 @@ Then ask: "Ready to start with [first/chosen round]?"
 ### Starting a round
 
 1. Ask which round the user wants to attempt (if not already specified).
-2. Fetch the question set: `GET /api/rounds/:id/question-sets`
-3. Create an attempt: `POST /api/rounds/:id/attempts` with `startedAt`
+2. **Ask whether they want the same questions or a fresh set** (if a prior attempt exists for this round):
+   > "Do you want the same questions as last time, or a fresh set?"
+   - **Same questions** → fetch the latest question set (`GET /api/rounds/:id/question-sets`, pick the highest `attemptNumber`), then `POST /api/rounds/:id/attempts` — the backend auto-resolves `question_set_id` to the latest set. This creates a retry: UI labels it as `1.1`, `1.2`, etc.
+   - **Fresh set** → generate a new non-overlapping question set, save it (`POST /api/rounds/:id/question-sets` with `attemptNumber` incremented), then `POST /api/rounds/:id/attempts`. UI labels it as `2`, `3`, etc.
+3. Create the attempt: `POST /api/rounds/:id/attempts` (with no body — backend resolves `question_set_id` automatically).
 4. State the estimated duration: "This round is typically ~X minutes. Track your time — I won't monitor it."
-5. If this is a **retry** (attempt > 1): fetch the last attempt's question results and surface missed points briefly before starting. Do not block — just show as context.
+5. If this is a **retry** (attempt > 1 on the same question set): fetch the last attempt's question results and surface missed points briefly before starting. Do not block — just show as context.
 
 ### Questioning
 
@@ -214,13 +217,15 @@ After all questions are answered:
 
 ## Replicate (fresh question set)
 
-When the user asks for a fresh set for a round:
+When the user asks for a fresh set for a round (or chooses "fresh set" when starting a round):
 
 1. Fetch all existing question sets: `GET /api/rounds/:id/question-sets`
-2. Extract all previously asked questions.
+2. Extract all previously asked questions across all sets.
 3. Re-read the JD (`jdText` from the application).
 4. Generate a new question set — **guaranteed non-overlapping** with all prior sets.
-5. Save: `POST /api/rounds/:id/question-sets` with `attemptNumber` incremented.
+5. Save: `POST /api/rounds/:id/question-sets` with `attemptNumber` incremented (e.g. if latest is 1, save with `attemptNumber: 2`).
+6. Then create the attempt: `POST /api/rounds/:id/attempts` — backend will auto-resolve to the newly saved set.
+7. UI will label this attempt as `2`, `3`, etc. (major number = new question set).
 
 ---
 
