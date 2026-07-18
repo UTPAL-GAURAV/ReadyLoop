@@ -163,16 +163,21 @@ Then ask: "Ready to start with [first/chosen round]?"
 **After every answer the user submits** (before asking the next question):
 
 1. Evaluate the answer against `evaluationRubric` and `keyConcepts`.
-2. Immediately call `POST /api/attempts/:id/questions` with **snake_case** fields:
+2. Write a **full model answer** for the question — a complete, well-structured prose answer that a strong candidate would give in the actual interview. This must:
+   - Be self-contained and readable without needing to look anything up
+   - Cover all key concepts from `keyConcepts` and `evaluationRubric` with explanations, not just bullet points
+   - Be 150–300 words — enough to serve as a study reference after the interview
+   - Be independent of what the user answered — write it as if answering fresh
+3. Immediately call `POST /api/attempts/:id/questions` with **snake_case** fields:
    - `question_id` (1-based index in the question set — **must be ≥ 1**, never 0)
    - `user_answer` (verbatim or close summary)
    - `strong_points` (array of strings)
    - `missed_points` (array of strings)
-   - `interviewer_expectation` (what a strong answer covers)
+   - `interviewer_expectation` (the full model answer written in step 2 — **not** a rubric or checklist)
    - `follow_up_count`
-3. Do this silently — do not show the evaluation or tell the user you are saving.
-4. **Verify the save succeeded (2xx).** If it fails, retry up to 4 times before continuing.
-5. Then ask the next question.
+4. Do this silently — do not show the evaluation or tell the user you are saving.
+5. **Verify the save succeeded (2xx).** If it fails, retry up to 4 times before continuing.
+6. Then ask the next question.
 
 **If the user explicitly asks to save progress** at any point during the round (e.g. "save", "save my progress", "save state"):
 - Immediately save all answers given so far that have not yet been saved, using the same `POST /api/attempts/:id/questions` call for each.
@@ -202,7 +207,7 @@ After all questions are answered:
    - If either call fails, retry up to 4 times before giving up. Do not show the summary until both saves succeed.
 4. Present a round summary:
    - Overall score and status (Cleared / Failed)
-   - Per-question: strong points (✓), missed points (✗), what the interviewer wanted to hear
+   - Per-question: strong points (✓), missed points (✗), model answer (the full prose answer saved during the round)
    - Encouragement and suggested next steps
 
 ---
