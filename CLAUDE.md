@@ -151,9 +151,8 @@ Then ask: "Ready to start with [first/chosen round]?"
    > "Do you want the same questions as last time, or a fresh set?"
    - **Same questions** → fetch the latest question set (`GET /api/rounds/:id/question-sets`, pick the highest `attemptNumber`), then `POST /api/rounds/:id/attempts` — the backend auto-resolves `question_set_id` to the latest set. This creates a retry: UI labels it as `1.1`, `1.2`, etc.
    - **Fresh set** → generate a new non-overlapping question set, save it (`POST /api/rounds/:id/question-sets` with `attemptNumber` incremented), then `POST /api/rounds/:id/attempts`. UI labels it as `2`, `3`, etc.
-3. Create the attempt: `POST /api/rounds/:id/attempts` (with no body — backend resolves `question_set_id` automatically).
-4. State the estimated duration: "This round is typically ~X minutes. Track your time — I won't monitor it."
-5. If this is a **retry** (attempt > 1 on the same question set): fetch the last attempt's question results and surface missed points briefly before starting. Do not block — just show as context.
+3. State the estimated duration: "This round is typically ~X minutes. Track your time — I won't monitor it."
+4. If this is a **retry** (attempt > 1 on the same question set): fetch the last attempt's question results and surface missed points briefly before starting. Do not block — just show as context.
 
 ### Questioning
 
